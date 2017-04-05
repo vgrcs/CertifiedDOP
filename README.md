@@ -1,2 +1,2 @@
 # CertifiedDOP
-Certifications of DOP binaries
+Certification of DOP binaries using PCC.
