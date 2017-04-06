@@ -1,2 +1,2 @@
 # CertifiedDOP
-Certification of DOP binaries (delta-RPMs) using PCC.
+Certifying delta-oriented binaries (delta-RPMs) using the PCC framework.
