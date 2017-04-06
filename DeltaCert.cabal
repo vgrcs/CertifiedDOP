@@ -1,0 +1,39 @@
+name: DeltaCert
+version: 0.0.1
+cabal-version: >=1.2
+build-type: Simple
+license: AllRightsReserved
+license-file: ""
+maintainer: Vitor Rodrigues
+synopsis: Create and Apply Certified Delta RPMs
+description: Create and Apply Certified Delta RPMs
+author: Vitor Rodrigues
+data-files: CoqDeltaRPM.v Example.v
+data-dir: ./coq
+ 
+executable DeltaCert
+    build-depends: MissingH -any, QuickCheck -any, base -any,
+                   cmdargs -any, containers -any, criterion -any, diff3 -any,
+                   directory -any, filepath -any, generic-deriving -any, mtl -any,
+                   parsec -any, path -any, pretty -any, process -any, pyfi -any,
+                   regex-posix -any, text -any
+    main-is: Main.hs
+    buildable: True
+    cpp-options: -DMAIN_FUNCTION=testMain
+    hs-source-dirs: coq src
+    other-modules: Main InternalData NMParser Checker Functions
+                   Operations Extraction Main Bifunctor
+ 
+executable Profiler
+    build-depends: MissingH -any, QuickCheck -any, base -any,
+                   cmdargs -any, containers -any, criterion -any, diff3 -any,
+                   directory -any, filepath -any, generic-deriving -any, mtl -any,
+                   parsec -any, path -any, pretty -any, process -any, pyfi -any,
+                   regex-posix -any, text -any
+    main-is: Main.hs
+    buildable: True
+    cpp-options: -DMAIN_FUNCTION=testMain
+    hs-source-dirs: src
+    other-modules: Main InternalData NMParser Checker Functions
+                   Operations Extraction Main Bifunctor
+ 
