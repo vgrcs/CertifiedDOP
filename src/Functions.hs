@@ -43,9 +43,9 @@ import Python
 import Text.Parsec.String
 import Text.Regex.Posix
 
+import Safety
 import NMParser
 import Extraction
-import Safety
 import InternalData
 import System.Exit
 

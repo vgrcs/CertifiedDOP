@@ -23,7 +23,7 @@ executable Profiler
     cpp-options: -DMAIN_FUNCTION=testMain
     hs-source-dirs: src
     other-modules: Main InternalData NMParser Checker Functions
-                   Operations Extraction Main Bifunctor
+                   Operations Extraction Main Bifunctor Safety
  
 executable DeltaCert
     build-depends: MissingH -any, QuickCheck -any, base -any,
@@ -34,7 +34,7 @@ executable DeltaCert
     main-is: Main.hs
     buildable: True
     cpp-options: -DMAIN_FUNCTION=testMain
-    hs-source-dirs: coq src
+    hs-source-dirs: src
     other-modules: Main InternalData NMParser Checker Functions
-                   Operations Extraction Main Bifunctor
+                   Operations Extraction Main Bifunctor Safety
  
