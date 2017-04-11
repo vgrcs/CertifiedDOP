@@ -41,6 +41,8 @@ Inductive Expr :=
 
 
 Inductive Apply : Expr * Table -> Type :=
+  | EMPTY
+    : Apply (Delta nil, List nil)
   | ADD_object      
     : forall core sym l,
         Apply (core, List l) ->
@@ -70,6 +72,8 @@ Inductive Resolved : (list ascii) -> Prop :=
 
 Reserved Notation "e ':' t" (at level 50, left associativity).
 Inductive TypedExpression : (Expr * DialectType) -> Type :=
+  | TE_Empty :
+      Delta nil : Type_Delta nil
   | TE_Symbols_Add   : 
       forall core op s syms,
         TypedSymbol (op, Type_Base s) ->
@@ -89,6 +93,7 @@ Inductive TypedExpression : (Expr * DialectType) -> Type :=
 where "e ':' n" := (TypedExpression (e, n)) : type_scope.
 
 Inductive SafeTable : (Table * DialectType) -> Type :=
+  | TC_Empty       : SafeTable (List nil, Type_Delta nil)
   | TC_Delta_Rem   : forall s syms (sym : Symbol) l l',
                        TypedSymbol (sym, Type_Base s) ->
                        SafeTable (List (l++sym::l'), Type_Delta syms) ->
@@ -114,6 +119,7 @@ Proof.
   dependent induction HEv;
   intros t HExp HDef;
   inversion HExp; subst. 
+  - constructor.
   - constructor; auto.
     eapply IHHEv; eauto.
     constructor.
