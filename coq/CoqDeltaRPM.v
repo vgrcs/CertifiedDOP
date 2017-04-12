@@ -119,22 +119,18 @@ Proof.
   dependent induction HEv;
   intros t HExp HDef;
   inversion HExp; subst. 
-  - constructor.
-  - constructor; auto.
+  - apply TC_Empty.
+  - apply TC_Delta_Add; auto.
     eapply IHHEv; eauto.
     constructor.
-    inversion HDef; subst.
-    intro. apply H.
-    apply in_cons.
-    assumption.
-  - econstructor; eauto. 
+    inversion HDef; subst. intro. apply H.
+    apply in_cons; assumption.
+  - eapply TC_Delta_Rem; eauto. 
     eapply IHHEv; eauto.
     constructor.
-    inversion H2; subst.
-    intro. apply H.
-    apply in_cons.
-    assumption.
-  - econstructor; [eapply IHHEv1 | eapply IHHEv2 ]; eauto;
+    inversion H2; subst. intro. apply H.
+    apply in_cons; assumption.
+  - apply TC_Delta_App; [eapply IHHEv1 | eapply IHHEv2 ]; eauto;
     inversion HDef; subst;
     constructor; intro; apply H; 
     apply in_or_app; [ left | right ]; auto.
@@ -146,4 +142,17 @@ Ltac solve_consistency :=
           | [ |-  ~ In _ _] =>  apply not_in_cons; intuition
           | [ H : _ = _  |- False ] => discriminate H
           | [ H : In _ _ |- False ] => apply in_inv in H; intuition            
+         end. 
+
+Ltac solve_apply :=
+  repeat match goal with
+          | [ |- Apply (_,_)] => 
+            repeat (apply APPLY_delta || apply ADD_object || apply EMPTY)
+         end.
+
+Ltac solve_typed_expr :=
+  repeat match goal with
+          | [ |- TypedExpression (_,_)] => 
+            repeat (apply TE_Delta || apply TE_Symbols_Add || 
+                    apply TE_Empty || apply TE_Symbol)
          end.
