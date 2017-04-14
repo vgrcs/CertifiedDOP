@@ -47,8 +47,8 @@ instance Show COQFormula where
 
 encodeCOQFormula :: [Atom] -> COQFormula
 encodeCOQFormula syms
-    = (encodePEv syms) :=>:
-      (encodePEx syms) :=>:
+    = -- (encodePEv syms) :=>:
+      -- (encodePEx syms) :=>:
       (encodePTy syms)
 
 encodePEx :: [Atom] -> COQFormula
@@ -69,7 +69,7 @@ encodePTy syms
     = let core =  ListSymbols []
           value = Assemble  syms -- (take 2 syms)
           abst = map (\(Symbol s _) -> Flag s)  syms -- (take 2 syms)
-      in (CoqPTy (SafeTable (value, Type_Delta Type_Object abst)))
+      in (CoqPTy (SafeTable (value, Goal (Type_Delta Type_Object abst))))
 
 
 
@@ -84,10 +84,17 @@ lemma l = text "Lemma delta :" $+$
           text (show l) Text.PrettyPrint.<>
           text "."
 
-proof h1
+proof syms
         = text "Proof." $+$
-          nest 2 (text "intros H1 H2.") $+$
-          nest 2 ((text "assert") <+> h1) $+$
+          --nest 2 (text "intros H1 H2.") $+$
+
+          nest 2 ((text "assert") <+> parens (text (show (encodePEv syms)))) $+$
+          nest 4 (text "by (solve_apply).") $+$
+
+          nest 2 ((text "assert") <+> parens (text (show (encodePEx syms)))) $+$
+          nest 4 (text "by (solve_typed_expr).") $+$
+
+          nest 2 ((text "assert") <+> (assertionH1 syms)) $+$
           nest 4 (text "by (solve_consistency).") $+$
           nest 2 (text "eauto using TypeLemma.") $+$
           text "Qed."
@@ -103,7 +110,7 @@ runCOQ (Table syms)
         source = render $
                  header $+$
                  lemma coq $+$
-                 proof (assertionH1 syms)
+                 proof syms
 
     writeFile ("vc.v") source
     whenLoud $ putStrLn =<< readFile "vc.v"

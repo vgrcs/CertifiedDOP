@@ -13,12 +13,12 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE DeriveGeneric #-}
 module Extraction (
-    Atom(..), CoqValue(..), Expr(..),
+    Atom(..), CoqValue(..), Expr(..), GoalType (..),
     Apply (..), TypedExpression (..), SafeTable (..), DialectType (..),
     BaseType (..), assertionH1
 ) where
 
-import Prelude
+--import Prelude
 import Text.PrettyPrint
 import Generics.Deriving.Base (Generic)
 import Generics.Deriving.Show (GShow, gshow)
@@ -48,9 +48,9 @@ instance Show CoqValue where
                             parens (foldl1 (<^>) (map (text .show) ss) <^> (text "nil"))
   show (Assemble [])    = render $ (text "List") <+> text "nil"
   show (Assemble ss)    = render $ (text "List") <+>
-                            parens (foldl1 (<^>)
-                                        (map (\s -> parens (text (show s))) ss)
-                                        <^> (text "nil"))
+                            parens (foldl1 (<#>)
+                                        (map (\s -> parens (text (show s) <^> (text "nil"))) ss)
+                                        <+> (text "++ nil"))
   show (ListOperations []) = render $ text "nil"
   show (ListOperations ss) = render $ foldl1 (<^>)
                                       (map (\s -> text (show s ) -- <> text "%string"
@@ -81,7 +81,10 @@ instance Show Expr where
     show (Object_elem o)        = render $ (text (show o))
     show expr                   = render $ parens $ text $ gshow expr
 
+tail_sym x = parens $ x <> text "++" <> text "nil"
+
 x <^> y = x <> text "::" <> y
+x <#> y = x <> text "++" <> y
 
 data DialectType =
    Type_Base BaseType
@@ -90,14 +93,27 @@ data DialectType =
  | Type_Variant BaseType
      deriving (Generic)
 
+data GoalType = Goal DialectType deriving (Generic)
+
+
 instance GShow DialectType
 instance GShow BaseType
+instance GShow GoalType
 
 instance Show DialectType where
     show (Type_Delta Type_Object []) = "Type_Delta nil"
-    show (Type_Delta Type_Object ss) = render $ (text "Type_Delta") <+>
-                                        parens (foldl1 (<^>) (map (text .show) ss) <^> (text "nil"))
+    show (Type_Delta Type_Object ss) =
+        render $ (text "Type_Delta") <+> parens (foldl1 (<#>)
+                        (map (\s -> parens (text (show s) <^> (text "nil"))) ss)
+                            <+> (text "++ nil"))
     show other = gshow other
+
+instance Show GoalType where
+    show (Goal (Type_Delta Type_Object [])) = "Type_Delta nil"
+    show (Goal (Type_Delta Type_Object ss)) =
+        render $ (text "Type_Delta") <+> parens (foldl1 (<^>) (map (text .show) ss) <^> (text "nil"))
+    show other = gshow other
+
 
 data BaseType =
    Type_Statechart
@@ -112,5 +128,5 @@ instance Show Apply where
                           (text "Apply") <+>  parens (text (show e) <> comma <+> text (show v))
 
 data TypedExpression = TypedExpression (Expr, DialectType) deriving (Show, Generic)
-data SafeTable = SafeTable (CoqValue, DialectType) deriving (Show, Generic)
+data SafeTable = SafeTable (CoqValue, GoalType) deriving (Show, Generic)
 

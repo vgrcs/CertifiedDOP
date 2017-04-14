@@ -18,8 +18,9 @@ module Main (
 ) where
 
 import Functions
-import Operations
 import Safety
+import Operations
+
 
 import System.Console.CmdArgs
 import System.Directory
