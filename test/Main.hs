@@ -20,6 +20,7 @@ import Criterion.Main
 import System.Process
 
 main =  do
-        let cmd = "DeltaCert apply -v -r -d ecall_delta-1.0-1.i686.drpm"
+        let cmd = "DeltaCert apply -r -d ecall_delta-1.0-1.i686.drpm"
             prog = readCreateProcessWithExitCode (shell cmd) ""
+        putStrLn $ "$> " ++ cmd
         defaultMain [ bgroup "checker"  [ bench "10" $ whnfIO prog ] ]

@@ -100,7 +100,7 @@ proof syms
           text "Qed."
 
 runChecker :: Internal -> Internal
-runChecker (Table syms)
+runChecker (ValueList [(Table syms), Install i])
  = ProofChecker <$> unsafePerformIO $ runCOQ (Table syms)
 
 runCOQ :: Internal -> IO ExitCode

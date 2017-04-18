@@ -58,15 +58,15 @@ import System.Exit
 
 makeDeltaRPM
   :: Internal -> Internal
-makeDeltaRPM (ValueList [RelFile a, RelFile b, RelDir c, RelFile d])
-  = ValueList <$> unsafePerformIO $ (def (a,b,c,d) >>= \[a',b',c',d'] -> return [a', b', c'])
+makeDeltaRPM (ValueList [RelFile a, RelFile b, RelDir c, RelFile d, Install i])
+  = ValueList <$> unsafePerformIO $ (def (a,b,c,d) >>= \[a',b',c',d'] -> return [a', b', c', Install i])
     where def (old_rpm_path, new_rpm_path, workdir, delta_rpm_path)
             = do
               let cmd = "makedeltarpm " ++
                         (fromRelFile old_rpm_path) ++ " " ++
                         (fromRelFile new_rpm_path) ++ " " ++
                         (fromRelFile (workdir </> delta_rpm_path))
-              putStrLn $ "$>" ++ cmd
+              whenLoud $ putStrLn $ "$>" ++ cmd
               (success, stdout, stderr) <- readCreateProcessWithExitCode (shell cmd) ""
               when (not (success == ExitSuccess))
                 $ putStrLn ("makedeltarpm := stderr :" ++ stderr)
@@ -273,7 +273,8 @@ getCommandLine1 oldrpmdir newrpmdir workdir deltarpm
       return $ ValueList [RelFile old_rpm_path,
                           RelFile new_rpm_path,
                           RelDir workdir,
-                          RelFile deltarpm ]
+                          RelFile deltarpm,
+                          Install False ]
 
 getCommandLine2
   :: FilePath ->

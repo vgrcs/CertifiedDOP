@@ -67,7 +67,7 @@ main = do
                 --manual test
                 --test_certify oldrpm newrpm workdir deltarpm
                 (val, env) <- runCertify2 oldrpm newrpm workdir deltarpm
-                print (env Data.Map.! "m") >> return ()
+                print (env) >> return ()
             Apply deltarpm workdir resolve install->
                 do
                 setSafetyLevel (if resolve then Level2 else Level1)
