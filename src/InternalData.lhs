@@ -41,6 +41,7 @@ data Internal  =  Table [Atom]
                |  RelFile (Path Rel File)
                |  ProofChecker ExitCode
                |  ValueList [Internal]
+               |  Install Bool
                   deriving (Eq)
 
 instance GShow Atom
@@ -51,11 +52,12 @@ instance Show Atom where
                             (doubleQuotes (text [s]))
 
 instance Show Internal where
-    show (RelFile f)   = "value: " ++ (fromRelFile f )
-    show (RelDir f)   = "value: " ++ (fromRelDir f )
-    show (ValueList t) = show t
-    show (Table v) = show v
+    show (RelFile f)      = fromRelFile f
+    show (RelDir f)       = fromRelDir f
+    show (ValueList t)    = show t
+    show (Table v)        = show v
     show (ProofChecker v) = show v
+    show (Install i)      = show i
 
 \end{code}
 \end{document}

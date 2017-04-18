@@ -8,9 +8,22 @@ maintainer: Vitor Rodrigues
 synopsis: Create and Apply Certified Delta RPMs
 description: Create and Apply Certified Delta RPMs
 author: Vitor Rodrigues
-data-files: "" CoqDeltaRPM.v Example.v Example1.v
+data-files: CoqDeltaRPM.v Example.v Example1.v
 data-dir: ./coq
 extra-source-files: ./test/Main.hs
+ 
+executable Profiler
+    build-depends: MissingH -any, QuickCheck -any, base -any,
+                   cmdargs -any, containers -any, criterion -any, diff3 -any,
+                   directory -any, filepath -any, generic-deriving -any, mtl -any,
+                   parsec -any, path -any, pretty -any, process -any, pyfi -any,
+                   regex-posix -any, text -any
+    main-is: Main.hs
+    buildable: True
+    cpp-options: -DMAIN_FUNCTION=testMain
+    hs-source-dirs: src test
+    other-modules: Main Safety NMParser Main InternalData Functions
+                   Checker Operations Extraction Bifunctor
  
 executable DeltaCert
     build-depends: MissingH -any, QuickCheck -any, base -any,
@@ -22,19 +35,6 @@ executable DeltaCert
     buildable: True
     cpp-options: -DMAIN_FUNCTION=testMain
     hs-source-dirs: src
-    other-modules: Main Safety NMParser Main InternalData Functions
-                   Checker Operations Extraction Bifunctor
- 
-executable Profiler
-    build-depends: MissingH -any, QuickCheck -any, base -any,
-                   cmdargs -any, containers -any, criterion -any, diff3 -any,
-                   directory -any, filepath -any, generic-deriving -any, mtl -any,
-                   parsec -any, path -any, pretty -any, process -any, pyfi -any,
-                   regex-posix -any, text -any
-    main-is: Main.hs
-    buildable: True
-    cpp-options: -DMAIN_FUNCTION=testMain
-    hs-source-dirs: test src 
     other-modules: Main Safety NMParser Main InternalData Functions
                    Checker Operations Extraction Bifunctor
  

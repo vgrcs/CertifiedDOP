@@ -27,10 +27,11 @@ import System.Directory
 import Control.Monad
 import Criterion.Main
 import System.IO.Unsafe
+import Data.Map
 
 data Diffy = Certify {oldrpmdir :: FilePath, newrpmdir :: FilePath, workdir :: FilePath,
                       deltarpm :: FilePath, resolve :: Bool }
-           | Apply {deltarpm :: FilePath,  workdir :: FilePath, resolve :: Bool }
+           | Apply {deltarpm :: FilePath,  workdir :: FilePath, resolve :: Bool, install :: Bool }
            deriving (Data,Typeable,Show,Eq)
 
 makedeltarpm = Certify
@@ -45,6 +46,7 @@ applydeltarpm = Apply
     {deltarpm = def &= typ "DELTAFILE" &= typFile -- &= argPos 0
     ,workdir = ("./data/"::FilePath) &= help "Set working project directory" &= typDir
     ,resolve = False &= help "Resolve Undefined (U) symbols"
+    ,install = False &= help "Install RPM after static checking"
     } &= help "Reconstruct an rpm from a deltarpm (safe operation)"
 
 mode = cmdArgsMode $
@@ -64,8 +66,9 @@ main = do
                      (error ("directive \"DELTADIR\" is invalid. mkdir (?)"))
                 --manual test
                 --test_certify oldrpm newrpm workdir deltarpm
-                runCertify2 oldrpm newrpm workdir deltarpm
-            Apply deltarpm workdir resolve ->
+                (val, env) <- runCertify2 oldrpm newrpm workdir deltarpm
+                print (env Data.Map.! "m") >> return ()
+            Apply deltarpm workdir resolve install->
                 do
                 setSafetyLevel (if resolve then Level2 else Level1)
                 ex <- doesDirectoryExist workdir
@@ -73,10 +76,6 @@ main = do
                      (error ("directive \"DELTADIR\" is invalid. mkdir (?)"))
                 --maual test
                 --test_apply workdir deltarpm
-                let runner a = let exit = unsafePerformIO $ runApply2 workdir deltarpm
-                               in exit
-                    result = runner 0
-                putStrLn (show result)
-
-
+                exit <- runApply2 workdir deltarpm install
+                print exit >> return ()
 

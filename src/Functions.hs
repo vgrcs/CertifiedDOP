@@ -79,9 +79,9 @@ makeDeltaRPM (ValueList [RelFile a, RelFile b, RelDir c, RelFile d])
 readDeltaRPM
   :: Internal ->
      Internal
-readDeltaRPM (ValueList [RelFile d, RelDir c])
+readDeltaRPM (ValueList [RelFile d, RelDir c, Install i])
   = ValueList <$> unsafePerformIO $
-                    (def >>= \[a,b] -> return [RelFile a, RelFile b, RelFile d, RelDir c])
+                  (def >>= \[a,b] -> return [RelFile a, RelFile b, RelFile d, RelDir c, Install i])
     where def = do
                 let f = defVV $ "def export(x): from deltarpm import readDeltaRPM;" ++
                                 "d = readDeltaRPM (x);" ++ -- ('" ++ c ++ "' + x);" ++
@@ -115,9 +115,9 @@ readDeltaRPM (ValueList [RelFile d, RelDir c])
 applyDeltaRPM
     :: Internal ->
        Internal
-applyDeltaRPM (ValueList [RelFile oldrpm, RelFile newrpm, RelFile deltarpm, RelDir c])
-    = ValueList <$> unsafePerformIO $ def (c, deltarpm, oldrpm, newrpm)
-      where def (c, d, o, n)
+applyDeltaRPM (ValueList [RelFile oldrpm, RelFile newrpm, RelFile deltarpm, RelDir c, Install i])
+    = ValueList <$> unsafePerformIO $ def (c, deltarpm, oldrpm, newrpm, i)
+      where def (c, d, o, n, i)
               = do
                 let options = " -p -v -r " ++ fromRelFile o  ++ " "
                 let cmd = "applydeltarpm" ++ options ++ " " ++
@@ -126,15 +126,15 @@ applyDeltaRPM (ValueList [RelFile oldrpm, RelFile newrpm, RelFile deltarpm, RelD
                 (success, stdout, stderr) <- readCreateProcessWithExitCode (shell cmd) ""
                 when (not (success == ExitSuccess))
                       $ putStrLn ("makedeltarpm := stderr :" ++ stderr)
-                return [RelFile oldrpm, RelFile newrpm, RelDir c]
+                return [RelFile oldrpm, RelFile newrpm, RelDir c, Install i]
 -- to be used on by the checker
 
 installRPM
     :: Internal ->
        Internal
-installRPM (ValueList [RelFile _, RelFile rpm, RelFile _, RelDir _])
-    = ProofChecker ExitSuccess
-{-  = ValueList <$> unsafePerformIO $ def (rpm)
+installRPM (ValueList [RelFile _, RelFile rpm, RelFile _, RelDir _, Install i])
+    = if i then ValueList <$> unsafePerformIO $ def (rpm)
+           else ProofChecker (ExitSuccess)
       where def (r)
               = do
                 let options = " -vh -U --force "
@@ -144,21 +144,18 @@ installRPM (ValueList [RelFile _, RelFile rpm, RelFile _, RelDir _])
                 when (not (success == ExitSuccess))
                       $ putStrLn ("install := stderr :" ++ stderr)
                 return []
--}
 
 readRPMSymbols
   :: Internal ->
      Internal
-readRPMSymbols (ValueList [RelFile a, RelFile b, RelDir c])
-  = let f (ll, lr) = [Table ll, Table lr]
+readRPMSymbols (ValueList [RelFile a, RelFile b, RelDir c, Install i])
+  = let f (ll, lr) = [Table ll, Table lr, Install i]
     in ValueList <$> unsafePerformIO $ liftM f (def (a,b,c))
     where def (old, new, workdir)
             = readSymTab (workdir, old) False >>= \old_syms ->
                     readSymTab (workdir, new) True >>= \new_syms ->
                         return (map (\(a,b) -> Symbol a b) old_syms,
                                 map (\(a,b) -> Symbol a b) new_syms)
-readRPMSymbols other
-    = error $ show other
 
 readSymTab
     :: (Path Rel Dir, Path Rel File) ->
@@ -223,10 +220,11 @@ resolveUndefinedSym binary
 deltaRPMSymbols
   :: Internal ->
      Internal
-deltaRPMSymbols (ValueList [Table a, Table b])
+deltaRPMSymbols (ValueList [Table a, Table b, Install i])
     = let f (Symbol s n) = (s,n)
           g = map (\(RightChange ((s,n):[])) -> Symbol s n)
-      in Table <$> unsafePerformIO $ liftM g (def (map f a, map f b))
+          t = Table <$> unsafePerformIO $ liftM g (def (map f a, map f b))
+      in ValueList (t:(Install i):[])
       where def (old, new)
               = do
                 let diffs = diff3 old old new
@@ -280,14 +278,17 @@ getCommandLine1 oldrpmdir newrpmdir workdir deltarpm
 getCommandLine2
   :: FilePath ->
      FilePath ->
+     Bool ->
      IO Internal
-getCommandLine2 workdir deltarpm
+getCommandLine2 workdir deltarpm install
    =  do
       workdir  :: Path Rel Dir  <- parseRelDir workdir
       deltarpm :: Path Rel File <- parseRelFile deltarpm
 
+
       return $ ValueList [RelFile deltarpm,
-                          RelDir workdir ]
+                          RelDir workdir,
+                          Install install ]
 
 test_certify
     :: FilePath ->
@@ -325,10 +326,11 @@ test_certify oldrpmdir newrpmdir workdir deltarpm
 test_apply
   :: FilePath ->
      FilePath ->
+     Bool ->
      IO ()
-test_apply workdir deltarpm
+test_apply workdir deltarpm install
   = do
-    args <- getCommandLine2 workdir deltarpm
+    args <- getCommandLine2 workdir deltarpm install
     let ValueList [RelFile deltarpm,
                    RelDir workdir ] = args
     whenLoud $ putStrLn ("read: " ++ show args)

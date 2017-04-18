@@ -104,12 +104,15 @@ runCertify2
      FilePath ->
      FilePath ->
      FilePath ->
-     IO ()
+     IO ((), Env)
 runCertify2 oldrpmdir newrpmdir workdir deltarpm
    = do
      let args = unsafePerformIO $ getCommandLine1 oldrpmdir newrpmdir workdir deltarpm
-     (val, env) <- runCertifyAux args
-     putStrLn (show env)
+     --(val, env) <- runCertifyAux args
+     --putStrLn ("make delta-RPM : " ++ show (size env))
+     --putStrLn (show env)
+     runCertifyAux args
+
 
 runCertifyAux
   ::  Internal -> IO ((), Env)
@@ -121,11 +124,12 @@ runCertifyAux args
 runApply2
   :: FilePath ->
      FilePath ->
-     IO (Int)
-runApply2 workdir deltarpm
+     Bool ->
+     IO (Internal)
+runApply2 workdir deltarpm install
   = do
 
-    let args = unsafePerformIO $  getCommandLine2 workdir deltarpm
+    let args = unsafePerformIO $  getCommandLine2 workdir deltarpm install
 
     let a = Assign "x" (ParseDeltaRPM "a")
         b = Assign "y" (ApplyDeltaRPM "x")
@@ -139,8 +143,8 @@ runApply2 workdir deltarpm
 
     let (ValueList (_:reconstructed:xs)) = env ! "x"
         result = env ! "i"
-    let b = if result == ProofChecker ExitSuccess then 0 else 2
-    return b
+    --let b = if result == ProofChecker ExitSuccess then 0 else 2
+    return result -- b
 
 runApplyAux
   ::  Internal -> IO ((), Env)
