@@ -1,0 +1,84 @@
+(declare-datatypes () ((Index I1 I2)))
+(declare-const d1 Index)
+(declare-const d2 Index)
+(declare-const name Bool)
+(assert (distinct d1 d2))
+
+(declare-datatypes () ((Feature F1 F2)))
+(declare-const f1 Feature)
+(declare-const f2 Feature)
+(assert (distinct f1 f2))
+
+(declare-fun delta_state (Index) Bool)
+(declare-fun delta_file (Index) Bool)
+(declare-fun feature (Feature Index) Bool)
+(declare-fun state (Bool Index) Bool)
+(declare-fun filename (Bool Index) Bool)
+(declare-const consistency Bool)
+
+(define-fun selected ((i1 Index) (i2 Index)) Bool
+    (and (delta_state i1) (delta_file i2)))    
+
+(define-fun activation ((f Feature) (i Index))  Bool
+    (= (feature f i) (selected i i)))    
+
+(define-fun consistent ((x Bool) (i1 Index) (i2 Index)) Bool
+    (=> (= i1 i2) (not (xor (state x i1) (filename x i2)))))
+
+
+;; theory
+(assert (= consistency (forall ((i Index)) (exists ((f Feature)) (activation f i)))))
+(assert (= consistency (forall ((x Bool) (i1 Index) (i2 Index)) (= (selected i1 i2) (consistent x i1 i2)))))
+
+(echo "-deltas have the same position in the order and both declare <name> ")
+;;valid instance
+(push)
+(assert (= (feature f1 d1) false))
+(assert (= (feature f2 d1) true))
+
+(assert (=(state name d1) true))
+(assert (=(filename name d1) true)) 
+ 
+(assert consistency)
+(echo "-is it satisfiable?")
+(check-sat)
+(echo "-is it valid (unsat)?")
+(assert (not consistency))
+(check-sat)
+(pop)
+
+;;valid instance
+(echo "-deltas have the same position in the order and there is no declarations of <name> ")
+(push)
+(assert (=(state name d1) false))
+(assert (=(filename name d1) false)) 
+ 
+(assert consistency)
+(echo "-is it satisfiable?")
+(check-sat)
+(echo "-is it valid (unsat)?")
+(assert (not consistency))
+(check-sat)
+(pop)
+
+;;invalid instance
+(echo "-deltas have the same position in the order but the program is not minimal ")
+(push)
+(assert (=(state name d1) false))
+(assert (=(filename name d1) true)) 
+
+(assert consistency)
+(echo "-is it satisfiable?")
+(check-sat)
+(pop)
+
+;;invalid instance
+(echo "-deltas have the same position in the order and there is a dangling state ")
+(push)
+(assert (=(state name d1) true))
+(assert (=(filename name d1) false)) 
+ 
+(assert consistency)
+(echo "-is it satisfiable?")
+(check-sat)
+(pop)
