@@ -1,89 +1,132 @@
 (declare-datatypes () ((Index I1 I2)))
-(declare-const d1 Index)
-(declare-const d2 Index)
+(declare-datatypes () ((Formula F1 F2)))
 (declare-const name String)
-(assert (distinct d1 d2))
-
-(declare-datatypes () ((Feature F1 F2)))
-(declare-const f1 Feature)
-(declare-const f2 Feature)
-(assert (distinct f1 f2))
 
 (declare-fun delta_state (Index) Bool)
 (declare-fun delta_file (Index) Bool)
-(declare-fun feature (Feature Index) Bool)
 (declare-fun state (String Index) Bool)
 (declare-fun filename (String Index) Bool)
-(declare-const consistency Bool)
+(declare-fun ck (Formula Index) Bool)
+(declare-const active Bool)
 
 (define-fun selected ((i1 Index) (i2 Index)) Bool
     (and (delta_state i1) (delta_file i2)))    
 
-(define-fun activation ((f Feature) (i Index))  Bool
-    (= (feature f i) (selected i i)))    
-
-(define-fun consistent ((x String) (i1 Index) (i2 Index)) Bool
+(define-fun bijection ((x String) (i1 Index) (i2 Index)) Bool
     (=> (= i1 i2) (not (xor (state x i1) (filename x i2)))))
 
+;;(define-fun prop0 () Bool
+;;  (forall ((i Index) (f Formula)) (=> (ck f i) active)))
+
 (define-fun prop1 () Bool
-  (forall ((i Index)) (exists ((f Feature)) (activation f i)))
-)
+  (forall ((i Index)) (exists ((f Formula)) (= (ck f i) (selected i i)))))
 
 (define-fun prop2 () Bool
-  (forall ((x String) (i1 Index) (i2 Index)) (= (selected i1 i2) (consistent x i1 i2)))
-)
+  (forall ((x String) (i1 Index) (i2 Index)) (= (selected i1 i2) (bijection x i1 i2))))
 
 (assert (= true (and prop1 prop2)))
 
-;; theory
-;;(assert (= consistency (forall ((i Index)) (exists ((f Feature)) (activation f i)))))
-;;(assert (= consistency (forall ((x String) (i1 Index) (i2 Index)) (= (selected i1 i2) (consistent x i1 i2)))))
-
-(echo "-deltas have the same position in the order and both declare <name> ")
 ;;valid instance
 (push)
-(assert (= (feature f1 d1) true))
-(assert (= (feature f2 d1) false))
 
-(assert (=(state name d1) true))
-(assert (=(filename name d1) true)) 
- 
+(declare-const index_1 Index)
+(declare-const index_2 Index)
+(assert (distinct index_1 index_2))
+
+(declare-const formula_1 Formula)
+(declare-const formula_2 Formula)
+(assert (distinct formula_1 formula_2))
+
+(declare-const feature_1 Bool)
+(declare-const feature_2 Bool)
+
+(assert (= true feature_1))
+(assert (= true feature_2))
+
+(assert (=> (ck formula_1 index_1) feature_1))
+(assert (=> (ck formula_1 index_2) false))
+
+(assert (=> (ck formula_2 index_1) false))
+(assert (=> (ck formula_2 index_2) (and feature_1 feature_2)))
+
+(assert (=(state "name_1" index_1) true))
+(assert (=(filename "name_1" index_1) true)) 
+
+(assert (=(state "name_2" index_2) true))
+(assert (=(filename "name_2" index_2) true))
+
 ;;(assert consistency)
 (echo "-is it satisfiable?")
 (check-sat)
 (pop)
 
-;;valid instance
-(echo "-no active feature ")
+
+;;inconsistent configuration knowledge
 (push)
 
-(assert (= (feature f1 d1) false))
-(assert (= (feature f2 d1) false))
+(declare-const index_1 Index)
+(declare-const index_2 Index)
+(assert (distinct index_1 index_2))
 
-;;(assert (=(state name d1) false))
-;;(assert (=(filename name d1) false)) 
- 
+(declare-const formula_1 Formula)
+(declare-const formula_2 Formula)
+(assert (distinct formula_1 formula_2))
+
+(declare-const feature_1 Bool)
+(declare-const feature_2 Bool)
+
+(assert (= true feature_1))
+;; disable F2
+(assert (= false feature_2))
+
+(assert (=> (ck formula_1 index_1) feature_1))
+(assert (=> (ck formula_1 index_2) false))
+
+(assert (=> (ck formula_2 index_1) false))
+(assert (=> (ck formula_2 index_2) (and feature_1 feature_2)))
+
+(assert (=(state "name_1" index_1) true))
+(assert (=(filename "name_1" index_1) true)) 
+
+(assert (=(state "name_2" index_2) true))
+(assert (=(filename "name_2" index_2) true))
+
+;;(assert consistency)
 (echo "-is it satisfiable?")
 (check-sat)
 (pop)
 
-;;invalid instance
-(echo "-deltas are activated and have the same position in the order but the program is not minimal ")
+;;inconsistent function and filename
 (push)
-(assert (=(state name d1) false))
-(assert (=(filename name d1) true)) 
 
+(declare-const index_1 Index)
+(declare-const index_2 Index)
+(assert (distinct index_1 index_2))
+
+(declare-const formula_1 Formula)
+(declare-const formula_2 Formula)
+(assert (distinct formula_1 formula_2))
+
+(declare-const feature_1 Bool)
+(declare-const feature_2 Bool)
+
+(assert (= true feature_1))
+(assert (= false feature_2))
+
+(assert (=> (ck formula_1 index_1) feature_1))
+(assert (=> (ck formula_1 index_2) false))
+
+(assert (=> (ck formula_2 index_1) false))
+(assert (=> (ck formula_2 index_2) (and feature_1 feature_2)))
+
+;; introduce a wrong state name
+(assert (=(state "name_1" index_1) false))
+(assert (=(filename "name_1" index_1) true)) 
+
+(assert (=(state "name_2" index_2) true))
+(assert (=(filename "name_2" index_2) true))
+
+;;(assert consistency)
 (echo "-is it satisfiable?")
 (check-sat)
 (pop)
-
-;;invalid instance
-(echo "-deltas are activated and have the same position in the order and there is a dangling state ")
-(push)
-(assert (=(state name d1) true))
-(assert (=(filename name d1) false)) 
- 
-(echo "-is it satisfiable?")
-(check-sat)
-(pop)
-
