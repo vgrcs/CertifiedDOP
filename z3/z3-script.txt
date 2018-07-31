@@ -7,7 +7,6 @@
 (declare-fun state (String Index) Bool)
 (declare-fun filename (String Index) Bool)
 (declare-fun ck (Formula Index) Bool)
-(declare-const active Bool)
 
 (define-fun selected ((i1 Index) (i2 Index)) Bool
     (and (delta_state i1) (delta_file i2)))    
